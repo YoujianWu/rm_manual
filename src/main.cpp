@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     manual_control = new rm_manual::EngineerManual(nh, nh_referee);
   else if (robot == "dart")
     manual_control = new rm_manual::DartManual(nh, nh_referee);
-  else if (robot == "balance")
+  else if (robot == "balance" || robot == "legged_balance")
     manual_control = new rm_manual::BalanceManual(nh, nh_referee);
   else
   {

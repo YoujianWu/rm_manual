@@ -12,9 +12,12 @@ class BalanceManual : public ChassisGimbalShooterCoverManual
 {
 public:
   BalanceManual(ros::NodeHandle& nh, ros::NodeHandle& nh_referee);
+  void run() override;
 
 protected:
   void updateRc(const rm_msgs::DbusData::ConstPtr& dbus_data) override;
+  void remoteControlTurnOff() override;
+  void remoteControlTurnOn() override;
   void wPress() override;
   void sPress() override;
   void aPress() override;
@@ -32,6 +35,7 @@ protected:
   void rightSwitchDownRise() override;
   void rightSwitchMidRise() override;
 
+  void chassisOutputOn() override;
   void sendCommand(const ros::Time& time) override;
   void checkKeyboard(const rm_msgs::DbusData::ConstPtr& dbus_data) override;
   void ctrlXPress();
@@ -47,6 +51,7 @@ private:
 
   bool flank_ = false, reverse_ = false;
   std::string flank_frame_, reverse_frame_;
+  rm_common::CalibrationQueue* chassis_calibration_;
 
   InputEvent v_event_, ctrl_x_event_, auto_fallen_event_;
 };

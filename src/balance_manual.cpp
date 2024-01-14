@@ -16,6 +16,9 @@ BalanceManual::BalanceManual(ros::NodeHandle& nh, ros::NodeHandle& nh_referee)
   nh.param("flank_frame", flank_frame_, std::string("flank_frame"));
   nh.param("reverse_frame", reverse_frame_, std::string("yaw_reverse_frame"));
   nh.param("balance_dangerous_angle", balance_dangerous_angle_, 0.3);
+  XmlRpc::XmlRpcValue rpc_value;
+  nh.getParam("chassis_calibration", rpc_value);
+  chassis_calibration_ = new rm_common::CalibrationQueue(rpc_value, nh, controller_manager_);
 
   is_balance_ = true;
   state_sub_ = balance_nh.subscribe<rm_msgs::BalanceState>("/state", 1, &BalanceManual::balanceStateCallback, this);
@@ -25,6 +28,12 @@ BalanceManual::BalanceManual(ros::NodeHandle& nh, ros::NodeHandle& nh_referee)
   auto_fallen_event_.setActiveHigh(boost::bind(&BalanceManual::modeFallen, this, _1));
   auto_fallen_event_.setDelayTriggered(boost::bind(&BalanceManual::modeNormalize, this), 1.5, true);
   ctrl_x_event_.setRising(boost::bind(&BalanceManual::ctrlXPress, this));
+}
+
+void BalanceManual::run()
+{
+  ChassisGimbalShooterCoverManual::run();
+  chassis_calibration_->update(ros::Time::now());
 }
 
 void BalanceManual::sendCommand(const ros::Time& time)
@@ -231,6 +240,24 @@ void BalanceManual::balanceStateCallback(const rm_msgs::BalanceState::ConstPtr& 
                                 vel_cmd_sender_->getMsg()->linear.x == 0 && vel_cmd_sender_->getMsg()->linear.y == 0 &&
                                 vel_cmd_sender_->getMsg()->angular.z == 0);
   }
+}
+
+void BalanceManual::chassisOutputOn()
+{
+  ChassisGimbalShooterCoverManual::chassisOutputOn();
+  chassis_calibration_->reset();
+}
+
+void BalanceManual::remoteControlTurnOff()
+{
+  ChassisGimbalShooterCoverManual::remoteControlTurnOff();
+  chassis_calibration_->stop();
+}
+
+void BalanceManual::remoteControlTurnOn()
+{
+  ChassisGimbalShooterCoverManual::remoteControlTurnOn();
+  chassis_calibration_->stopController();
 }
 
 void BalanceManual::modeNormalize()
