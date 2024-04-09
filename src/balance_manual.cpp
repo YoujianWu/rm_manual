@@ -61,6 +61,12 @@ void BalanceManual::sendCommand(const ros::Time& time)
   balance_cmd_sender_->sendCommand(time);
 }
 
+void BalanceManual::checkReferee()
+{
+  chassis_power_on_event_.update(chassis_output_on_);
+  ChassisGimbalShooterCoverManual::checkReferee();
+}
+
 void BalanceManual::checkKeyboard(const rm_msgs::DbusData::ConstPtr& dbus_data)
 {
   ChassisGimbalShooterCoverManual::checkKeyboard(dbus_data);

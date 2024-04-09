@@ -37,6 +37,7 @@ protected:
 
   void chassisOutputOn() override;
   void sendCommand(const ros::Time& time) override;
+  void checkReferee() override;
   void checkKeyboard(const rm_msgs::DbusData::ConstPtr& dbus_data) override;
   void ctrlXPress();
   void modeFallen(ros::Duration duration);

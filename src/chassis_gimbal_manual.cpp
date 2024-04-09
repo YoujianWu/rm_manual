@@ -56,7 +56,6 @@ void ChassisGimbalManual::updatePc(const rm_msgs::DbusData::ConstPtr& dbus_data)
 
 void ChassisGimbalManual::checkReferee()
 {
-  chassis_power_on_event_.update(ros::Time::now() - chassis_actuator_last_get_stamp_ < ros::Duration(0.5));
   ManualBase::checkReferee();
 }
 
