@@ -23,6 +23,7 @@ BalanceManual::BalanceManual(ros::NodeHandle& nh, ros::NodeHandle& nh_referee)
   is_balance_ = true;
   state_sub_ = balance_nh.subscribe<rm_msgs::BalanceState>("/state", 1, &BalanceManual::balanceStateCallback, this);
   jump_pub_ = balance_nh.advertise<std_msgs::Bool>("/controllers/legged_balance_controller/jump_command", 1);
+  leg_length_pub_ = balance_nh.advertise<std_msgs::Float64>("/controllers/legged_balance_controller/leg_command", 1);
   x_event_.setRising(boost::bind(&BalanceManual::xPress, this));
   g_event_.setRising(boost::bind(&BalanceManual::gPress, this));
   v_event_.setRising(boost::bind(&BalanceManual::vPress, this));
@@ -30,6 +31,7 @@ BalanceManual::BalanceManual(ros::NodeHandle& nh, ros::NodeHandle& nh_referee)
   auto_fallen_event_.setDelayTriggered(boost::bind(&BalanceManual::modeNormalize, this), 1.5, true);
   ctrl_x_event_.setRising(boost::bind(&BalanceManual::ctrlXPress, this));
   ctrl_f_event_.setRising(boost::bind(&BalanceManual::ctrlFPress, this));
+  ctrl_g_event_.setRising(boost::bind(&BalanceManual::ctrlGPress, this));
 }
 
 void BalanceManual::run()
@@ -75,6 +77,7 @@ void BalanceManual::checkKeyboard(const rm_msgs::DbusData::ConstPtr& dbus_data)
   v_event_.update(dbus_data->key_v && !dbus_data->key_ctrl);
   ctrl_x_event_.update(dbus_data->key_ctrl && dbus_data->key_x);
   ctrl_f_event_.update(dbus_data->key_ctrl && dbus_data->key_f);
+  ctrl_g_event_.update(dbus_data->key_ctrl && dbus_data->key_g);
 }
 
 void BalanceManual::updateRc(const rm_msgs::DbusData::ConstPtr& dbus_data)
@@ -243,6 +246,23 @@ void BalanceManual::ctrlFPress()
   std_msgs::Bool msg;
   msg.data = true;
   jump_pub_.publish(msg);
+}
+
+void BalanceManual::ctrlGPress()
+{
+  std_msgs::Float64 msg;
+  if (!stretch_)
+  {
+    msg.data = 0.25;
+    stretch_ = true;
+  }
+  else
+  {
+    msg.data = 0.2;
+    stretch_ = false;
+  }
+
+  leg_length_pub_.publish(msg);
 }
 
 void BalanceManual::balanceStateCallback(const rm_msgs::BalanceState::ConstPtr& msg)
