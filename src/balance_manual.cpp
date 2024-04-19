@@ -22,12 +22,14 @@ BalanceManual::BalanceManual(ros::NodeHandle& nh, ros::NodeHandle& nh_referee)
 
   is_balance_ = true;
   state_sub_ = balance_nh.subscribe<rm_msgs::BalanceState>("/state", 1, &BalanceManual::balanceStateCallback, this);
+  jump_pub_ = balance_nh.advertise<std_msgs::Bool>("/controllers/legged_balance_controller/jump_command", 1);
   x_event_.setRising(boost::bind(&BalanceManual::xPress, this));
   g_event_.setRising(boost::bind(&BalanceManual::gPress, this));
   v_event_.setRising(boost::bind(&BalanceManual::vPress, this));
   auto_fallen_event_.setActiveHigh(boost::bind(&BalanceManual::modeFallen, this, _1));
   auto_fallen_event_.setDelayTriggered(boost::bind(&BalanceManual::modeNormalize, this), 1.5, true);
   ctrl_x_event_.setRising(boost::bind(&BalanceManual::ctrlXPress, this));
+  ctrl_f_event_.setRising(boost::bind(&BalanceManual::ctrlFPress, this));
 }
 
 void BalanceManual::run()
@@ -63,8 +65,8 @@ void BalanceManual::sendCommand(const ros::Time& time)
 
 void BalanceManual::checkReferee()
 {
-  chassis_power_on_event_.update(chassis_output_on_);
   ChassisGimbalShooterCoverManual::checkReferee();
+  chassis_power_on_event_.update(chassis_output_on_);
 }
 
 void BalanceManual::checkKeyboard(const rm_msgs::DbusData::ConstPtr& dbus_data)
@@ -72,6 +74,7 @@ void BalanceManual::checkKeyboard(const rm_msgs::DbusData::ConstPtr& dbus_data)
   ChassisGimbalShooterCoverManual::checkKeyboard(dbus_data);
   v_event_.update(dbus_data->key_v && !dbus_data->key_ctrl);
   ctrl_x_event_.update(dbus_data->key_ctrl && dbus_data->key_x);
+  ctrl_f_event_.update(dbus_data->key_ctrl && dbus_data->key_f);
 }
 
 void BalanceManual::updateRc(const rm_msgs::DbusData::ConstPtr& dbus_data)
@@ -233,6 +236,13 @@ void BalanceManual::ctrlXPress()
     balance_cmd_sender_->setBalanceMode(rm_msgs::BalanceState::FALLEN);
   else
     balance_cmd_sender_->setBalanceMode(rm_msgs::BalanceState::NORMAL);
+}
+
+void BalanceManual::ctrlFPress()
+{
+  std_msgs::Bool msg;
+  msg.data = true;
+  jump_pub_.publish(msg);
 }
 
 void BalanceManual::balanceStateCallback(const rm_msgs::BalanceState::ConstPtr& msg)

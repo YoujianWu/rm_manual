@@ -40,6 +40,7 @@ protected:
   void checkReferee() override;
   void checkKeyboard(const rm_msgs::DbusData::ConstPtr& dbus_data) override;
   void ctrlXPress();
+  void ctrlFPress();
   void modeFallen(ros::Duration duration);
   void modeNormalize();
   rm_common::BalanceCommandSender* balance_cmd_sender_{};
@@ -48,12 +49,13 @@ private:
   void balanceStateCallback(const rm_msgs::BalanceState::ConstPtr& msg);
 
   ros::Subscriber state_sub_;
+  ros::Publisher jump_pub_;
   double balance_dangerous_angle_;
 
   bool flank_ = false, reverse_ = false;
   std::string flank_frame_, reverse_frame_;
   rm_common::CalibrationQueue* chassis_calibration_;
 
-  InputEvent v_event_, ctrl_x_event_, auto_fallen_event_;
+  InputEvent v_event_, ctrl_x_event_, ctrl_f_event_, auto_fallen_event_;
 };
 }  // namespace rm_manual
