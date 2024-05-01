@@ -138,18 +138,23 @@ void BalanceManual::shiftPress()
   std_msgs::Float64 msg;
   msg.data = 0.1;
   leg_length_pub_.publish(msg);
-  chassis_cmd_sender_->updateSafetyPower(60);
+  chassis_cmd_sender_->updateSafetyPower(220);
 }
 
 void BalanceManual::vPress()
 {
-  chassis_cmd_sender_->updateSafetyPower(80);
+  chassis_cmd_sender_->updateSafetyPower(220);
 }
 
 void BalanceManual::bPress()
 {
   ChassisGimbalShooterCoverManual::bPress();
-  chassis_cmd_sender_->updateSafetyPower(100);
+  chassis_cmd_sender_->updateSafetyPower(220);
+}
+
+void BalanceManual::bRelease()
+{
+  chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::BURST);
 }
 
 void BalanceManual::wPress()

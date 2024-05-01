@@ -30,6 +30,7 @@ protected:
   void sPressing() override;
   void dPressing() override;
   void bPress() override;
+  void bRelease() override;
   void vPress() override;
   void ctrlZPress() override;
   void rightSwitchDownRise() override;
