@@ -126,12 +126,18 @@ void BalanceManual::ctrlZPress()
 void BalanceManual::shiftRelease()
 {
   chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
+  std_msgs::Float64 msg;
+  msg.data = 0.18;
+  leg_length_pub_.publish(msg);
 }
 
 void BalanceManual::shiftPress()
 {
   ChassisGimbalShooterCoverManual::shiftPress();
   chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::UP_SLOPE);
+  std_msgs::Float64 msg;
+  msg.data = 0.1;
+  leg_length_pub_.publish(msg);
   chassis_cmd_sender_->updateSafetyPower(60);
 }
 
@@ -152,6 +158,11 @@ void BalanceManual::wPress()
     flank_ = !flank_;
   if (!supply_)
     chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::BURST);
+  if (is_gyro_)
+  {
+    chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
+    vel_cmd_sender_->setAngularZVel(0.0);
+  }
   ChassisGimbalShooterCoverManual::wPress();
 }
 
@@ -170,6 +181,11 @@ void BalanceManual::sPress()
     flank_ = !flank_;
   if (!supply_)
     chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::BURST);
+  if (is_gyro_)
+  {
+    chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
+    vel_cmd_sender_->setAngularZVel(0.0);
+  }
   ChassisGimbalShooterCoverManual::sPress();
 }
 
@@ -186,6 +202,11 @@ void BalanceManual::aPress()
 {
   if (!flank_)
     flank_ = !flank_;
+  if (is_gyro_)
+  {
+    chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
+    vel_cmd_sender_->setAngularZVel(0.0);
+  }
   ChassisGimbalShooterCoverManual::aPress();
 }
 
@@ -202,6 +223,11 @@ void BalanceManual::dPress()
 {
   if (!flank_)
     flank_ = !flank_;
+  if (is_gyro_)
+  {
+    chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
+    vel_cmd_sender_->setAngularZVel(0.0);
+  }
   ChassisGimbalShooterCoverManual::dPress();
 }
 
