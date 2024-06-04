@@ -77,6 +77,7 @@ protected:
   void aRelease() override;
   void sRelease() override;
   void dRelease() override;
+  void robotRevive() override;
   virtual void gPress();
   virtual void vPress();
   virtual void xPress();

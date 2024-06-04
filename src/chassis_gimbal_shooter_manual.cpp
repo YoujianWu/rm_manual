@@ -618,4 +618,13 @@ void ChassisGimbalShooterManual::ctrlQPress()
   shooter_calibration_->reset();
   gimbal_calibration_->reset();
 }
+
+void ChassisGimbalShooterManual::robotRevive()
+{
+  if (is_gyro_)
+  {
+    is_gyro_ = false;
+  }
+  ManualBase::robotRevive();
+}
 }  // namespace rm_manual
