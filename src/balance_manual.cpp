@@ -163,11 +163,11 @@ void BalanceManual::wPress()
     flank_ = !flank_;
   if (!supply_)
     chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::BURST);
-  if (is_gyro_)
-  {
-    chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
-    vel_cmd_sender_->setAngularZVel(0.0);
-  }
+  //  if (is_gyro_)
+  //  {
+  //    chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
+  //    vel_cmd_sender_->setAngularZVel(0.0);
+  //  }
   ChassisGimbalShooterCoverManual::wPress();
 }
 
@@ -186,11 +186,11 @@ void BalanceManual::sPress()
     flank_ = !flank_;
   if (!supply_)
     chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::BURST);
-  if (is_gyro_)
-  {
-    chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
-    vel_cmd_sender_->setAngularZVel(0.0);
-  }
+  //  if (is_gyro_)
+  //  {
+  //    chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
+  //    vel_cmd_sender_->setAngularZVel(0.0);
+  //  }
   ChassisGimbalShooterCoverManual::sPress();
 }
 
@@ -207,11 +207,11 @@ void BalanceManual::aPress()
 {
   if (!flank_)
     flank_ = !flank_;
-  if (is_gyro_)
-  {
-    chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
-    vel_cmd_sender_->setAngularZVel(0.0);
-  }
+  //  if (is_gyro_)
+  //  {
+  //    chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
+  //    vel_cmd_sender_->setAngularZVel(0.0);
+  //  }
   ChassisGimbalShooterCoverManual::aPress();
 }
 
@@ -228,11 +228,11 @@ void BalanceManual::dPress()
 {
   if (!flank_)
     flank_ = !flank_;
-  if (is_gyro_)
-  {
-    chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
-    vel_cmd_sender_->setAngularZVel(0.0);
-  }
+  //  if (is_gyro_)
+  //  {
+  //    chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
+  //    vel_cmd_sender_->setAngularZVel(0.0);
+  //  }
   ChassisGimbalShooterCoverManual::dPress();
 }
 
