@@ -15,22 +15,17 @@ BalanceManual::BalanceManual(ros::NodeHandle& nh, ros::NodeHandle& nh_referee)
 
   nh.param("flank_frame", flank_frame_, std::string("flank_frame"));
   nh.param("reverse_frame", reverse_frame_, std::string("yaw_reverse_frame"));
-  nh.param("balance_dangerous_angle", balance_dangerous_angle_, 0.3);
   XmlRpc::XmlRpcValue rpc_value;
   nh.getParam("chassis_calibration", rpc_value);
   chassis_calibration_ = new rm_common::CalibrationQueue(rpc_value, nh, controller_manager_);
 
   is_balance_ = true;
-  state_sub_ = balance_nh.subscribe<rm_msgs::BalanceState>("/state", 1, &BalanceManual::balanceStateCallback, this);
   jump_pub_ = balance_nh.advertise<std_msgs::Bool>("/controllers/legged_balance_controller/jump_command", 1);
   leg_length_pub_ = balance_nh.advertise<std_msgs::Float64>("/controllers/legged_balance_controller/leg_command", 1);
   x_event_.setRising(boost::bind(&BalanceManual::xPress, this));
   g_event_.setRising(boost::bind(&BalanceManual::gPress, this));
   v_event_.setRising(boost::bind(&BalanceManual::vPress, this));
-  auto_fallen_event_.setActiveHigh(boost::bind(&BalanceManual::modeFallen, this, _1));
-  auto_fallen_event_.setDelayTriggered(boost::bind(&BalanceManual::modeNormalize, this), 1.5, true);
   ctrl_x_event_.setRising(boost::bind(&BalanceManual::ctrlXPress, this));
-  ctrl_f_event_.setRising(boost::bind(&BalanceManual::ctrlFPress, this));
   ctrl_g_event_.setRising(boost::bind(&BalanceManual::ctrlGPress, this));
 }
 
@@ -87,6 +82,30 @@ void BalanceManual::updateRc(const rm_msgs::DbusData::ConstPtr& dbus_data)
     flank_ = true;
   else if (std::abs(dbus_data->ch_r_y) > 0.5 && std::abs(dbus_data->ch_r_y) > std::abs(dbus_data->ch_r_x))
     flank_ = false;
+  if (dbus_data->wheel && dbus_data->s_l == 3)
+  {
+    std_msgs::Float64 msg;
+    msg.data = abs(dbus_data->wheel) * 0.3 > 0.1 ? abs(dbus_data->wheel) * 0.3 : 0.15;
+    leg_length_pub_.publish(msg);
+    vel_cmd_sender_->setAngularZVel(0.0);
+  }
+  else
+  {
+    vel_cmd_sender_->setAngularZVel(1.0);
+  }
+  if (!is_gyro_)
+  {  // Capacitor enter fast charge when chassis stop.
+    if (!dbus_data->wheel && chassis_cmd_sender_->getMsg()->mode == rm_msgs::ChassisCmd::FOLLOW &&
+        std::sqrt(std::pow(vel_cmd_sender_->getMsg()->linear.x, 2) + std::pow(vel_cmd_sender_->getMsg()->linear.y, 2)) >
+            0.0)
+      chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::BURST);
+    else if (chassis_power_ < 6.0 && chassis_cmd_sender_->getMsg()->mode == rm_msgs::ChassisCmd::FOLLOW)
+      chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::BURST);
+  }
+  else
+  {
+    chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::NORMAL);
+  }
 }
 
 void BalanceManual::rightSwitchDownRise()
@@ -126,29 +145,32 @@ void BalanceManual::ctrlZPress()
 void BalanceManual::shiftRelease()
 {
   chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
-  std_msgs::Float64 msg;
-  msg.data = 0.18;
-  leg_length_pub_.publish(msg);
+  // std_msgs::Float64 msg;
+  // msg.data = 0.18;
+  // leg_length_pub_.publish(msg);
 }
 
 void BalanceManual::shiftPress()
 {
   ChassisGimbalShooterCoverManual::shiftPress();
   chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::UP_SLOPE);
-  std_msgs::Float64 msg;
-  msg.data = 0.1;
-  leg_length_pub_.publish(msg);
+  //  std_msgs::Float64 msg;
+  //  msg.data = 0.1;
+  //  leg_length_pub_.publish(msg);
   chassis_cmd_sender_->updateSafetyPower(220);
 }
 
 void BalanceManual::vPress()
 {
-  chassis_cmd_sender_->updateSafetyPower(220);
+  std_msgs::Bool msg;
+  msg.data = true;
+  jump_pub_.publish(msg);
 }
 
 void BalanceManual::bPress()
 {
   ChassisGimbalShooterCoverManual::bPress();
+  chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::CHARGE);
   chassis_cmd_sender_->updateSafetyPower(220);
 }
 
@@ -272,13 +294,6 @@ void BalanceManual::ctrlXPress()
     balance_cmd_sender_->setBalanceMode(rm_msgs::BalanceState::NORMAL);
 }
 
-void BalanceManual::ctrlFPress()
-{
-  std_msgs::Bool msg;
-  msg.data = true;
-  jump_pub_.publish(msg);
-}
-
 void BalanceManual::ctrlGPress()
 {
   std_msgs::Float64 msg;
@@ -294,19 +309,6 @@ void BalanceManual::ctrlGPress()
   }
 
   leg_length_pub_.publish(msg);
-}
-
-void BalanceManual::balanceStateCallback(const rm_msgs::BalanceState::ConstPtr& msg)
-{
-  if ((ros::Time::now() - msg->header.stamp).toSec() < 0.2)
-  {
-    if (std::abs(msg->theta) > balance_dangerous_angle_)
-      chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::BURST);
-    if (msg->mode == rm_msgs::BalanceState::NORMAL)
-      auto_fallen_event_.update(std::abs(msg->theta) > 0.42 && std::abs(msg->x_dot) > 1.5 &&
-                                vel_cmd_sender_->getMsg()->linear.x == 0 && vel_cmd_sender_->getMsg()->linear.y == 0 &&
-                                vel_cmd_sender_->getMsg()->angular.z == 0);
-  }
 }
 
 void BalanceManual::chassisOutputOn()
@@ -325,20 +327,5 @@ void BalanceManual::remoteControlTurnOn()
 {
   ChassisGimbalShooterCoverManual::remoteControlTurnOn();
   chassis_calibration_->stopController();
-}
-
-void BalanceManual::modeNormalize()
-{
-  balance_cmd_sender_->setBalanceMode(rm_msgs::BalanceState::NORMAL);
-  ROS_INFO("mode normalize");
-}
-
-void BalanceManual::modeFallen(ros::Duration duration)
-{
-  if (duration.toSec() > 0.3)
-  {
-    balance_cmd_sender_->setBalanceMode(rm_msgs::BalanceState::FALLEN);
-    ROS_INFO("mode fallen");
-  }
 }
 }  // namespace rm_manual
