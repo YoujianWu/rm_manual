@@ -630,10 +630,7 @@ void ChassisGimbalShooterManual::ctrlQPress()
 
 void ChassisGimbalShooterManual::robotRevive()
 {
-  if (is_gyro_)
-  {
-    is_gyro_ = false;
-  }
+  setChassisMode(rm_msgs::ChassisCmd::FOLLOW);
   ManualBase::robotRevive();
 }
 }  // namespace rm_manual
