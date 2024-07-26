@@ -41,6 +41,7 @@ protected:
   void checkReferee() override;
   void checkKeyboard(const rm_msgs::DbusData::ConstPtr& dbus_data) override;
   void ctrlXPress();
+  void ctrlFPress() override;
   void ctrlGPress();
   rm_common::BalanceCommandSender* balance_cmd_sender_{};
 
@@ -53,6 +54,6 @@ private:
   std::string flank_frame_, reverse_frame_;
   rm_common::CalibrationQueue* chassis_calibration_;
 
-  InputEvent v_event_, ctrl_x_event_, ctrl_g_event_;
+  InputEvent v_event_, ctrl_x_event_, ctrl_f_event_, ctrl_g_event_;
 };
 }  // namespace rm_manual

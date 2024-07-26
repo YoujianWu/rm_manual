@@ -97,7 +97,7 @@ protected:
   {
     shooter_cmd_sender_->setShootFrequency(rm_common::HeatLimit::LOW);
   }
-  void ctrlFPress()
+  virtual void ctrlFPress()
   {
     shooter_cmd_sender_->setMode(rm_msgs::ShootCmd::STOP);
   }

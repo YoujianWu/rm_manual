@@ -26,6 +26,7 @@ BalanceManual::BalanceManual(ros::NodeHandle& nh, ros::NodeHandle& nh_referee)
   g_event_.setRising(boost::bind(&BalanceManual::gPress, this));
   v_event_.setRising(boost::bind(&BalanceManual::vPress, this));
   ctrl_x_event_.setRising(boost::bind(&BalanceManual::ctrlXPress, this));
+  ctrl_f_event_.setRising(boost::bind(&BalanceManual::ctrlFPress, this));
   ctrl_g_event_.setRising(boost::bind(&BalanceManual::ctrlGPress, this));
 }
 
@@ -162,15 +163,12 @@ void BalanceManual::shiftPress()
 
 void BalanceManual::vPress()
 {
-  std_msgs::Bool msg;
-  msg.data = true;
-  jump_pub_.publish(msg);
+  chassis_cmd_sender_->updateSafetyPower(220);
 }
 
 void BalanceManual::bPress()
 {
   ChassisGimbalShooterCoverManual::bPress();
-  chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::CHARGE);
   chassis_cmd_sender_->updateSafetyPower(220);
 }
 
@@ -292,6 +290,13 @@ void BalanceManual::ctrlXPress()
     balance_cmd_sender_->setBalanceMode(rm_msgs::BalanceState::FALLEN);
   else
     balance_cmd_sender_->setBalanceMode(rm_msgs::BalanceState::NORMAL);
+}
+
+void BalanceManual::ctrlFPress()
+{
+  std_msgs::Bool msg;
+  msg.data = true;
+  jump_pub_.publish(msg);
 }
 
 void BalanceManual::ctrlGPress()
