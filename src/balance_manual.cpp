@@ -170,7 +170,6 @@ void BalanceManual::vPress()
 void BalanceManual::bPress()
 {
   ChassisGimbalShooterCoverManual::bPress();
-  chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::CHARGE);
   chassis_cmd_sender_->updateSafetyPower(220);
 }
 
