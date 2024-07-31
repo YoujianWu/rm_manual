@@ -29,10 +29,12 @@ protected:
   void rightSwitchUpRise() override;
   void rPress() override;
   void ePress() override;
-  void zPressing();
+  void zPress();
   void zRelease();
   void wPress() override;
   void wPressing() override;
+  void ctrlRPressing();
+  void ctrlRRelease() override;
 
   virtual void ctrlZPress();
   virtual void ctrlZRelease()
@@ -50,5 +52,6 @@ protected:
   ros::Time last_switch_time_;
   bool supply_ = false;
   bool cover_close_ = true;
+  int count_{};
 };
 }  // namespace rm_manual
