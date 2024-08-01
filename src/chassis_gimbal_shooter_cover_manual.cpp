@@ -20,7 +20,7 @@ ChassisGimbalShooterCoverManual::ChassisGimbalShooterCoverManual(ros::NodeHandle
   switch_exposure_srv_ = new rm_common::SwitchDetectionCaller(exposure_switch_nh);
   ros::NodeHandle chassis_nh(nh, "chassis");
   normal_speed_scale_ = chassis_nh.param("normal_speed_scale", 1);
-  low_speed_scale_ = chassis_nh.param("low_speed_scale", 0.30);
+  low_speed_scale_ = chassis_nh.param("low_speed_scale", 1.0);
   nh.param("exit_buff_mode_duration", exit_buff_mode_duration_, 0.5);
 
   ctrl_z_event_.setEdge(boost::bind(&ChassisGimbalShooterCoverManual::ctrlZPress, this),

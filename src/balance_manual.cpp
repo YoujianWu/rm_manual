@@ -82,17 +82,6 @@ void BalanceManual::updateRc(const rm_msgs::DbusData::ConstPtr& dbus_data)
     flank_ = true;
   else if (std::abs(dbus_data->ch_r_y) > 0.5 && std::abs(dbus_data->ch_r_y) > std::abs(dbus_data->ch_r_x))
     flank_ = false;
-  if (dbus_data->wheel && dbus_data->s_l == 3)
-  {
-    std_msgs::Float64 msg;
-    msg.data = abs(dbus_data->wheel) * 0.3 > 0.1 ? abs(dbus_data->wheel) * 0.3 : 0.15;
-    leg_length_pub_.publish(msg);
-    vel_cmd_sender_->setAngularZVel(0.0);
-  }
-  else
-  {
-    vel_cmd_sender_->setAngularZVel(1.0);
-  }
   if (!is_gyro_)
   {  // Capacitor enter fast charge when chassis stop.
     if (!dbus_data->wheel && chassis_cmd_sender_->getMsg()->mode == rm_msgs::ChassisCmd::FOLLOW &&
@@ -130,6 +119,10 @@ void BalanceManual::ctrlZPress()
   ChassisGimbalShooterCoverManual::ctrlZPress();
   if (supply_)
   {
+    if (is_gyro_)
+    {
+      is_gyro_ = false;
+    }
     balance_cmd_sender_->setBalanceMode(rm_msgs::BalanceState::FALLEN);
     chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FALLEN);
     chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::CHARGE);
@@ -139,6 +132,9 @@ void BalanceManual::ctrlZPress()
     balance_cmd_sender_->setBalanceMode(rm_msgs::BalanceState::NORMAL);
     chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FOLLOW);
     chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::BURST);
+    std_msgs::Float64 msg;
+    msg.data = 0.18;
+    leg_length_pub_.publish(msg);
   }
 }
 
@@ -303,7 +299,7 @@ void BalanceManual::ctrlGPress()
   }
   else
   {
-    msg.data = 0.2;
+    msg.data = 0.18;
     stretch_ = false;
   }
 
@@ -316,6 +312,13 @@ void BalanceManual::chassisOutputOn()
   chassis_calibration_->reset();
 }
 
+void BalanceManual::robotRevive()
+{
+  ChassisGimbalShooterManual::robotRevive();
+  balance_cmd_sender_->setBalanceMode(rm_msgs::BalanceState::FALLEN);
+  chassis_cmd_sender_->setMode(rm_msgs::ChassisCmd::FALLEN);
+  chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::CHARGE);
+}
 void BalanceManual::remoteControlTurnOff()
 {
   ChassisGimbalShooterCoverManual::remoteControlTurnOff();

@@ -37,6 +37,7 @@ protected:
   void rightSwitchMidRise() override;
 
   void chassisOutputOn() override;
+  void robotRevive() override;
   void sendCommand(const ros::Time& time) override;
   void checkReferee() override;
   void checkKeyboard(const rm_msgs::DbusData::ConstPtr& dbus_data) override;
