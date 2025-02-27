@@ -30,30 +30,30 @@ LeggedWheelBalanceManual::LeggedWheelBalanceManual(ros::NodeHandle& nh, ros::Nod
 void LeggedWheelBalanceManual::sendCommand(const ros::Time& time)
 {
   BalanceManual::sendCommand(time);
-  if (is_gyro_)
-  {
-    double current_length = legCommandSender_->getLgeLength();
-    if (is_increasing_length_)
-    {
-      if (current_length < 0.3)
-      {
-        double delta = current_length + 0.002;
-        legCommandSender_->setLgeLength(delta > 0.3 ? 0.3 : delta);
-      }
-      else
-        is_increasing_length_ = false;
-    }
-    else
-    {
-      if (current_length > 0.18)
-      {
-        double delta = current_length - 0.002;
-        legCommandSender_->setLgeLength(delta < 0.18 ? 0.18 : delta);
-      }
-      else
-        is_increasing_length_ = true;
-    }
-  }
+  // if (is_gyro_)
+  // {
+  //   double current_length = legCommandSender_->getLgeLength();
+  //   if (is_increasing_length_)
+  //   {
+  //     if (current_length < 0.3)
+  //     {
+  //       double delta = current_length + 0.002;
+  //       legCommandSender_->setLgeLength(delta > 0.3 ? 0.3 : delta);
+  //     }
+  //     else
+  //       is_increasing_length_ = false;
+  //   }
+  //   else
+  //   {
+  //     if (current_length > 0.18)
+  //     {
+  //       double delta = current_length - 0.002;
+  //       legCommandSender_->setLgeLength(delta < 0.18 ? 0.18 : delta);
+  //     }
+  //     else
+  //       is_increasing_length_ = true;
+  //   }
+  // }
   legCommandSender_->sendCommand(time);
 }
 

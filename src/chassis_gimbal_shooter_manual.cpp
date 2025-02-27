@@ -79,6 +79,16 @@ void ChassisGimbalShooterManual::run()
   chassis_calibration_->update(ros::Time::now());
   shooter_calibration_->update(ros::Time::now());
   gimbal_calibration_->update(ros::Time::now());
+  if (remote_is_open_ && chassis_calibration_->isCalibrated() && gimbal_calibration_->isCalibrated() &&
+      shooter_calibration_->isCalibrated())
+  {
+    controller_manager_.stopCalibrationControllers();
+    controller_manager_.startMainControllers();
+  }
+  else
+  {
+    controller_manager_.stopMainControllers();
+  }
 }
 
 void ChassisGimbalShooterManual::checkReferee()
@@ -674,6 +684,7 @@ void ChassisGimbalShooterManual::ctrlXPress()
 void ChassisGimbalShooterManual::robotRevive()
 {
   setChassisMode(rm_msgs::ChassisCmd::FOLLOW);
+  chassis_calibration_->reset();
   ManualBase::robotRevive();
 }
 
