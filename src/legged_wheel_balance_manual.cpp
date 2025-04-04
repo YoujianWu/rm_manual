@@ -30,30 +30,30 @@ LeggedWheelBalanceManual::LeggedWheelBalanceManual(ros::NodeHandle& nh, ros::Nod
 void LeggedWheelBalanceManual::sendCommand(const ros::Time& time)
 {
   BalanceManual::sendCommand(time);
-  if (is_gyro_)
-  {
-    double current_length = legCommandSender_->getLgeLength();
-    if (is_increasing_length_)
-    {
-      if (current_length < 0.3)
-      {
-        double delta = current_length + 0.002;
-        legCommandSender_->setLgeLength(delta > 0.3 ? 0.3 : delta);
-      }
-      else
-        is_increasing_length_ = false;
-    }
-    else
-    {
-      if (current_length > 0.18)
-      {
-        double delta = current_length - 0.002;
-        legCommandSender_->setLgeLength(delta < 0.18 ? 0.18 : delta);
-      }
-      else
-        is_increasing_length_ = true;
-    }
-  }
+  // if (is_gyro_)
+  // {
+  //   double current_length = legCommandSender_->getLgeLength();
+  //   if (is_increasing_length_)
+  //   {
+  //     if (current_length < 0.3)
+  //     {
+  //       double delta = current_length + 0.002;
+  //       legCommandSender_->setLgeLength(delta > 0.3 ? 0.3 : delta);
+  //     }
+  //     else
+  //       is_increasing_length_ = false;
+  //   }
+  //   else
+  //   {
+  //     if (current_length > 0.18)
+  //     {
+  //       double delta = current_length - 0.002;
+  //       legCommandSender_->setLgeLength(delta < 0.18 ? 0.18 : delta);
+  //     }
+  //     else
+  //       is_increasing_length_ = true;
+  //   }
+  // }
   legCommandSender_->sendCommand(time);
 }
 
@@ -114,7 +114,7 @@ void LeggedWheelBalanceManual::shiftPress()
 
 void LeggedWheelBalanceManual::ctrlPress()
 {
-  legCommandSender_->setJump(true);
+  legCommandSender_->setJump(false);
 }
 
 void LeggedWheelBalanceManual::ctrlRelease()
@@ -124,21 +124,19 @@ void LeggedWheelBalanceManual::ctrlRelease()
 
 void LeggedWheelBalanceManual::bPress()
 {
-  ChassisGimbalShooterCoverManual::bPress();
-  chassis_cmd_sender_->updateSafetyPower(60);
+  legCommandSender_->setJump(true);
 }
 
 void LeggedWheelBalanceManual::bRelease()
 {
-  chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::BURST);
-  chassis_cmd_sender_->updateSafetyPower(60);
+  legCommandSender_->setJump(false);
 }
 
 void LeggedWheelBalanceManual::ctrlGPress()
 {
   if (!stretch_)
   {
-    legCommandSender_->setLgeLength(0.3);
+    legCommandSender_->setLgeLength(0.32);
     stretch_ = true;
   }
   else
@@ -162,6 +160,16 @@ void LeggedWheelBalanceManual::unstickCallback(const std_msgs::BoolConstPtr& msg
     legCommandSender_->setLgeLength(0.18);
     stretching_ = false;
   }
+}
+
+void LeggedWheelBalanceManual::leftSwitchDownRise()
+{
+  legCommandSender_->setJump(false);
+}
+
+void LeggedWheelBalanceManual::leftSwitchMidRise()
+{
+  legCommandSender_->setJump(true);
 }
 
 }  // namespace rm_manual

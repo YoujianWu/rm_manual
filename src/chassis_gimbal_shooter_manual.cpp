@@ -79,16 +79,17 @@ void ChassisGimbalShooterManual::run()
   chassis_calibration_->update(ros::Time::now());
   shooter_calibration_->update(ros::Time::now());
   gimbal_calibration_->update(ros::Time::now());
-}
 
-void ChassisGimbalShooterManual::ecatReconnected()
-{
-  ChassisGimbalManual::ecatReconnected();
-  shooter_calibration_->reset();
-  gimbal_calibration_->reset();
-  up_change_position_ = false;
-  low_change_position_ = false;
-  need_change_position_ = false;
+  if (referee_is_online_ && remote_is_open_ && chassis_calibration_->isCalibrated() &&
+      gimbal_calibration_->isCalibrated())
+  {
+    controller_manager_.stopCalibrationControllers();
+    controller_manager_.startMainControllers();
+  }
+  else
+  {
+    controller_manager_.stopMainControllers();
+  }
 }
 
 void ChassisGimbalShooterManual::checkReferee()
@@ -259,6 +260,7 @@ void ChassisGimbalShooterManual::robotDie()
 
 void ChassisGimbalShooterManual::chassisOutputOn()
 {
+  // 只有上电
   ChassisGimbalManual::chassisOutputOn();
   chassis_cmd_sender_->power_limit_->updateState(rm_common::PowerLimit::CHARGE);
   chassis_calibration_->reset();
@@ -684,6 +686,9 @@ void ChassisGimbalShooterManual::ctrlXPress()
 void ChassisGimbalShooterManual::robotRevive()
 {
   setChassisMode(rm_msgs::ChassisCmd::FOLLOW);
+  chassis_calibration_->reset();
+  shooter_calibration_->reset();
+  gimbal_calibration_->reset();
   ManualBase::robotRevive();
 }
 

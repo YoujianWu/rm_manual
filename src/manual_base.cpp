@@ -11,8 +11,6 @@ ManualBase::ManualBase(ros::NodeHandle& nh, ros::NodeHandle& nh_referee)
   std::string dbus_topic_;
   dbus_topic_ = getParam(nh, "dbus_topic", std::string("/rm_ecat_hw/dbus"));
   // sub
-  ecat_bus_state_sub_ =
-      nh.subscribe<rm_msgs::BusState>("/rm_ecat_hw/bus_state", 10, &ManualBase::ecatBusStateCallback, this);
   joint_state_sub_ = nh.subscribe<sensor_msgs::JointState>("/joint_states", 10, &ManualBase::jointStateCallback, this);
   actuator_state_sub_ =
       nh.subscribe<rm_msgs::ActuatorState>("/actuator_states", 10, &ManualBase::actuatorStateCallback, this);
@@ -54,7 +52,6 @@ ManualBase::ManualBase(ros::NodeHandle& nh, ros::NodeHandle& nh_referee)
   left_switch_mid_event_.setEdge(boost::bind(&ManualBase::leftSwitchMidRise, this),
                                  boost::bind(&ManualBase::leftSwitchMidFall, this));
   robot_hp_event_.setEdge(boost::bind(&ManualBase::robotRevive, this), boost::bind(&ManualBase::robotDie, this));
-  ecat_reconnected_event_.setRising(boost::bind(&ManualBase::ecatReconnected, this));
 
   XmlRpc::XmlRpcValue xml;
   if (!nh.getParam("chassis_calibrate_motor", xml))
@@ -77,7 +74,6 @@ ManualBase::ManualBase(ros::NodeHandle& nh, ros::NodeHandle& nh_referee)
 void ManualBase::run()
 {
   checkReferee();
-  ecat_reconnected_event_.update(ecat_bus_is_online_);
   controller_manager_.update();
 }
 
@@ -86,8 +82,9 @@ void ManualBase::checkReferee()
   chassis_power_on_event_.update(chassis_output_on_);
   gimbal_power_on_event_.update(gimbal_output_on_);
   shooter_power_on_event_.update(shooter_output_on_);
-  referee_is_online_ = (ros::Time::now() - referee_last_get_stamp_ < ros::Duration(0.3));
+  referee_is_online_ = (ros::Time::now() - referee_last_get_stamp_ < ros::Duration(2.0));
   manual_to_referee_pub_.publish(manual_to_referee_pub_data_);
+  robot_hp_event_.update(referee_is_online_);
 }
 
 void ManualBase::updateActuatorStamp(const rm_msgs::ActuatorState::ConstPtr& data, std::vector<std::string> act_vector,
@@ -105,26 +102,6 @@ void ManualBase::updateActuatorStamp(const rm_msgs::ActuatorState::ConstPtr& dat
     dis = std::distance(data->name.begin(), it);
     if (data->stamp.at(dis) > last_get_stamp)
       last_get_stamp = data->stamp.at(dis);
-  }
-}
-
-void ManualBase::ecatBusStateCallback(const rm_msgs::BusState::ConstPtr& data)
-{
-  size_t online_bus_count = 0;
-  for (const auto& state : data->isOnline)
-  {
-    if (state)
-    {
-      online_bus_count++;
-    }
-  }
-  if (online_bus_count != data->name.size())
-  {
-    ecat_bus_is_online_ = false;
-  }
-  else
-  {
-    ecat_bus_is_online_ = true;
   }
 }
 
@@ -183,7 +160,6 @@ void ManualBase::gameRobotStatusCallback(const rm_msgs::GameRobotStatus::ConstPt
   chassis_output_on_ = data->mains_power_chassis_output;
   gimbal_output_on_ = data->mains_power_gimbal_output;
   shooter_output_on_ = data->mains_power_shooter_output;
-  robot_hp_event_.update(data->remain_hp != 0);
 }
 
 void ManualBase::powerHeatDataCallback(const rm_msgs::PowerHeatData::ConstPtr& data)
@@ -219,8 +195,8 @@ void ManualBase::remoteControlTurnOn()
 
 void ManualBase::robotRevive()
 {
-  if (remote_is_open_)
-    controller_manager_.startMainControllers();
+  // if (remote_is_open_)
+  //   controller_manager_.startMainControllers();
 }
 
 void ManualBase::robotDie()
